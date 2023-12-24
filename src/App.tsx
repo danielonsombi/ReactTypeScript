@@ -8,6 +8,9 @@ import { PersonList } from './Components/PersonList';
 import { Status } from './Components/Status';
 import { Input } from './Components/Input';
 import { Container } from './Components/Container';
+import { LoggedIn } from './Components/State/LoggedIn';
+import User from './Components/State/User';
+import UserTwo from './Components/State/UserTwo';
 
 function App() {
   const personName = {
@@ -31,7 +34,11 @@ function App() {
   ]
   return (
     <div className="App">
-      <Container styles={{border:'1px solid black', padding:'1rem'}}/>
+      <UserTwo/>
+      {/* <User/> */}
+      {/* <LoggedIn/> */}
+
+      {/* <Container styles={{border:'1px solid black', padding:'1rem'}}/> */}
 
       {/* <Input value='' handleChange={event => console.log(event)}/> */}
 

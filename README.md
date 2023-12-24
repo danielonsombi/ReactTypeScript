@@ -457,3 +457,68 @@ export const PersonList = (props: PersonListProps) => {
 }
 
 Which makes the code simple, readable and reusable. Also avoids duplication.
+
+Typing Hooks:
+1. useState Hook:
+Without Typescript codey, we can use the useState hook as below:
+
+import { useState } from "react"
+
+export const LoggedIn = () => {
+    const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+    const handleLogin  = () => {
+        setIsLoggedIn(true)
+    }
+    const handleLogout = () => {
+        setIsLoggedIn(false)
+    }
+    return (
+        <div>
+            <button onClick={handleLogin}>Login</button>
+            <button onClick={handleLogout}>Logout</button>
+            <div>User is {isLoggedIn ? 'logged in' : 'logged out'}</div>
+        </div>
+    )
+}
+in the code above, is you pass in a 0 to setIsLoggedIn, typescript will throw an error. As opposed to vanilla JavaScript that treats 0 and false as the same, typescript does not. But the above code still works inspite of being in typescript becuase of type inferencing. TypeScript is smart enough to infer what the state variable type is based on the initial value that is passed in. Since false, then will only allow boolean values. For simple values, typescript thorugh inferencing can figure them out. However this is not the case with complex types or don't know the value initially but could have a value in future.
+
+When a user accesses a website, by default they are not logged in. The useState is therefore intialized to null. The same applies when logging out. On Login we provide the user and email. Since typescript intialized the value to null, when trying to pass the object with the name and email, typescript will complain. To pacify typescript, we have to specify the type of the state without depending on inferencing.
+
+This is done using the angle brackets as useState<AuthUser | null>(null). This informs typescript that the type can either be null or AuthUser. Hence the code below:
+With such, in the JSX we can access the user.name. However, wehn trying to access it, typescript automatically add ? since it can be either null or have a value hence user?.name. The final code look like:
+
+import { useState } from 'react'
+
+type AuthUser = {
+    name: string
+    email: string
+}
+
+const User = () => {
+    const [User, setUser] = useState<AuthUser | null>(null)
+
+    const handleLogin  = () => {
+        setUser({
+            name: 'Daniel',
+            email: 'danonsombi@gmail.com'
+        })
+    }
+    const handleLogout = () => {
+        setUser(null)
+    }
+
+    return (
+        <div>
+            <button onClick={handleLogin}>Login</button>
+            <button onClick={handleLogout}>Logout</button>
+            <div>User name is {User?.name}</div>
+            <div>User email is {User?.email}</div>
+        </div>
+    )
+}
+
+export default User
+
+useState Type Assertion:
+The assumption of user can either be null or have a value is always right and by default the typescript syntax. But as a dev, you'd always know that typescript will have a value or not. In such cases you can use the assertion that the user will always be of type AuthUser and cannot be null. For Type assertion we use the 'as' keyword. In this way you can access the name and email without a check see UserTwo in the state folder.
