@@ -344,5 +344,116 @@ And can be called in App.tsx as:
     </div>
 
 Prop Types and Tips:
+1. You can destructure props when defining the component. So far we have defined props within parenthesis and 
+used them to access different properties within the object. Such can still be achieved as:
+    Initial:
+        type InputProps = {
+            value: string
+            handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+        }
 
+        export const Input = (props: InputProps) => {
+            return <input type='text' value={props.value} onChange={props.handleChange}>
+        }
 
+    Destructured: - Prefer this approach
+        export const Input = ({value, handleChange}: InputProps) => {
+            return <input type='text' value={value} onChange={handleChange}>
+        }
+
+2. Exporting types:
+Currently we defined props at the top of all our components. In large components with multiple types you often want to move the types to a separate file and import them where necessary. Forinstance the person file:\
+
+type PersonProps = {
+    name: {
+        first: string
+        last: string
+    }
+}
+export const Person = (props: PersonProps) => {
+    return (
+        <div>
+            {props.name.first} {props.name.last}
+        </div>
+    )
+}
+
+can be re-written using two files:
+Person.types.tsx:
+
+export type PersonProps = {
+    name: {
+        first: string
+        last: string
+    }
+}
+
+and the Person.tsx:
+
+import { PersonProps } from "./Person.types"
+
+export const Person = (props: PersonProps) => {
+    return (
+        <div>
+            {props.name.first} {props.name.last}
+        </div>
+    )
+}
+
+3. Reusing types:
+Can extract types and use it in multiple places. For instance, Person type can be recreated as:
+
+export type Name = {
+    first: string
+    last: string
+}
+
+export type PersonProps = {
+    name: Name
+}
+
+With such, we can the rewrite the PersonList component from:
+
+import React from 'react'
+
+type PersonListProps = {
+    names: {
+        first: string
+        last: string
+    }[]
+}
+
+export const PersonList = (props: PersonListProps) => {
+  return (
+    <div>
+      {props.names.map(name => {
+        return (
+            <h2 key={name.first}>{name.first} {name.last}</h2>
+        )
+      })}
+    </div>
+  )
+}
+
+to:
+
+import React from 'react'
+import {Name} from './Person.types'
+
+type PersonListProps = {
+    names: Name[]
+}
+
+export const PersonList = (props: PersonListProps) => {
+  return (
+    <div>
+      {props.names.map(name => {
+        return (
+            <h2 key={name.first}>{name.first} {name.last}</h2>
+        )
+      })}
+    </div>
+  )
+}
+
+Which makes the code simple, readable and reusable. Also avoids duplication.
