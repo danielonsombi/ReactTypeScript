@@ -248,4 +248,101 @@ Further to this, you can disstructure the messageCount prop and assign it a defa
 const { messageCount = 0 } = props - I.e., if it has a value then use the value else use 0.
 
 The component looks as below:
+import React from 'react'
+
+type GreetProps = {
+    name: string,
+    messageCount?: number
+    isLoggedIn: boolean
+}
+
+export const Greet = (props: GreetProps) => {
+  const {messageCount = 0} = props
+  return (
+    <div>
+        <h2>
+            {props.isLoggedIn ?
+            `Welcome ${props.name}! You have ${messageCount} unread messages`
+            
+            : `Welcome Guest`}
+        </h2>
+    </div>
+  )
+}
+
+
+Event Props:
+We will focus on the two most frequently used events as props. The click and oncchange events:
+1. Click Event:
+The intention is to have the button to accept the click event as a prop and pass it to the html button element. Initial code:
+
+export const Button = () => {
+    return <button>Click</button>
+} 
+
+a. At first the click handler does not need any parameter and does not return anything. Hence declared as void. See below:
+
+type ButtonProps = {
+    handleClick: () => void
+}
+
+export const Button = (props: ButtonProps) => {
+    return <button onClick={props.handleClick}>Click</button>
+}
+
+and called from app.js as:
+    <div className="App">
+      <Button
+        handleClick = {() => {
+          console.log('Button Clicked')
+        }}
+      />
+    </div>
+
+b. If you want an event passed to your click handler the code is changed slighly by passing an event as a parameter and defining the type of the event using a react type (React.MouseEvent<HTMLButtonElement>) This explicitly defines the type of event and that is is a button element. No need to import them since readily available in our environment.
+
+
+2. OnChange Event:
+Input elements will rypically need two props, the input value and onchange handler. The typing process is kinda similar to the button click event type. The difference is that the onchange type takes in two props one for value and the other for change. The formating looks as below:
+
+type InputProps = {
+    value: string
+    handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+}
+
+export const Input=(props: InputProps)=> {
+    return <div><input type="text" value={props.value} onChange={props.handleChange}/></div>
+}
+
+
+Style Props:
+
+export const Container = (props: ContainerProps) => {
+    return(
+        <div style={{border: '1px solid black', padding: '1rem'}}>
+            Text content goes here
+        </div>
+    )
+}
+A react component can be created and hard coded styling added to it. However, such can be achieved by passing the styling as a component as opposed to having it hard coded. On the con=mponent, you achieve this by adding the container props type with prop styles. The key for the prop is alway a string but the key can be a number or string e.g., (border: '1px solid black'). There is need to restrict to valid style string. So we use the React.CSSProperties. If you try to pass a value that is not css, typescript will throw an error. The code therefore looks as below:
+
+type ContainerProps = {
+    styles: React.CSSProperties
+}
+
+export const Container = (props: ContainerProps) => {
+    return(
+        <div style={props.styles}>
+            Text content goes here
+        </div>
+    )
+}
+
+And can be called in App.tsx as:
+    <div className="App">
+      <Container styles={{border:'1px solid black', padding:'1rem'}}/>
+    </div>
+
+Prop Types and Tips:
+
 
