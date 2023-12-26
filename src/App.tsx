@@ -11,6 +11,11 @@ import { Container } from './Components/Container';
 import { LoggedIn } from './Components/State/LoggedIn';
 import User from './Components/State/User';
 import UserTwo from './Components/State/UserTwo';
+import { Counter } from './Components/State/Counter';
+import { ThemeContextProvider } from './Components/Context/ThemeContext';
+import { Box } from './Components/Context/Box';
+import { UserContextProvider } from './Components/Context/UserContext';
+import {ContextUser} from './Components/Context/ContextUserUser';
 
 function App() {
   const personName = {
@@ -34,7 +39,14 @@ function App() {
   ]
   return (
     <div className="App">
-      <UserTwo/>
+      <UserContextProvider>
+        <ContextUser />
+      </UserContextProvider>
+      {/* <ThemeContextProvider>
+        <Box />
+      </ThemeContextProvider> */}
+      {/* <Counter/> */}
+      {/* <UserTwo/> */}
       {/* <User/> */}
       {/* <LoggedIn/> */}
 

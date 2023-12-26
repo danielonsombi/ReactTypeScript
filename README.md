@@ -522,3 +522,295 @@ export default User
 
 useState Type Assertion:
 The assumption of user can either be null or have a value is always right and by default the typescript syntax. But as a dev, you'd always know that typescript will have a value or not. In such cases you can use the assertion that the user will always be of type AuthUser and cannot be null. For Type assertion we use the 'as' keyword. In this way you can access the name and email without a check see UserTwo in the state folder.
+
+useReducer Hook:
+For complex implementations, the useReducer hook is used instead of the the useState hook.
+With the useReducer, we must specify the state and action parameters in the reducer function and pass corresponding arguments when making the calls to the function.
+Using typescript, the state and action will throw an error since their types have not been specified.
+
+import {useReducer} from 'react'
+
+const initialState = { Count: 0 }
+
+const reducer = (state, action) => {
+    switch (action) {
+        case 'increment':
+           return {
+                count: state.count + action.payload
+           }
+        
+           case 'descrement':
+            return {count: state.count - action.payload}
+    
+        default:
+            return state;
+    }
+}
+
+
+The types must therefore be specified as below:
+
+import {useReducer} from 'react'
+
+type CounterState = {
+    count: number
+}
+
+type CounterAction = {
+    type: string
+    payload: number
+}
+
+const initialState = { count: 0 }
+
+function reducer(state: CounterState, action: CounterAction)
+{
+    switch (action.type) {
+        case 'increment':
+           return { count: state.count + action.payload}
+        
+        case 'decrement':
+            return {count: state.count - action.payload}
+    
+        default:
+            return state;
+    }
+}
+
+Having the type set to state, means we can pass in any string. But we can change this to use the template literals to ensure correct strings are passed in. Since we know the type can be either increment or decrement we can set it as so.
+
+In some of the types say reset, no payload should be passed in since it is to return the initial state. Explicitly, typescript should be informed of this. If you change the value of payload to 
+
+type CounterAction = {
+    type: 'increment' | 'decrement' | 'reset',
+    payload?: number
+}
+
+The reducer function will throw an error which can be fixed the old versioned way as:
+
+function reducer(state: CounterState, action: CounterAction)
+{
+    switch (action.type) {
+        case 'increment':
+           return { count: state.count + (action.payload || 0)}
+        
+        case 'decrement':
+            return {count: state.count - (action.payload || 0)}
+        
+        case 'reset':
+            return initialState
+    
+        default:
+            return state;
+    }
+}
+
+But the recommended approach should be to create an action type responsible for increment and decrement actions where payload is mandatory. Then create a second action type responsible for reset action. Then create a counter action (using discreminated unions in typescript) which can be either UpdateAction or ResetAction as below:
+
+import {useReducer} from 'react'
+
+type CounterState = {
+    count: number
+}
+
+type UpdateAction = {
+    type: 'increment' | 'decrement' | 'reset',
+    payload: number
+}
+
+type ResetAction = {
+    type: 'reset'
+}
+
+type CounterAction = UpdateAction | ResetAction
+
+const initialState = { count: 0 }
+
+function reducer(state: CounterState, action: CounterAction)
+{
+    switch (action.type) {
+        case 'increment':
+           return { count: state.count + action.payload}
+        
+        case 'decrement':
+            return {count: state.count - action.payload}
+        
+        case 'reset':
+            return initialState
+    
+        default:
+            return state;
+    }
+}
+
+export const Counter = () => {
+    const [state, dispatch] = useReducer(reducer, initialState)
+
+    return (
+        <>
+            Count: {state.count}
+            <button onClick={() => dispatch({type:'increment', payload:10})}>Increment 10</button>
+            <button onClick={() => dispatch({type:'decrement', payload:10})}>Decrement 10</button>
+            <button onClick={() => dispatch({type:'reset'})}>Reset</button>
+        </>
+    )
+}
+
+
+Typescript and React Context:
+A very common useContext use case is to provide a them to components. We create a theme.ts with a primary and secondary palette color.
+Then create the theme context file as below:
+
+import {createContext} from "react";
+import { theme } from './theme'
+
+type ThemeContextProviderProps = { 
+    children: React.ReactNode
+}
+
+export const ThemeContext = createContext(theme)
+
+export const ThemeContextProvider = ({
+    children,
+}: ThemeContextProviderProps) => {
+    return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
+}
+
+on the app.tsx, import the themecontext provider and the file to consume the created context:
+import {createContext} from "react";
+import { theme } from './theme'
+
+type ThemeContextProviderProps = { 
+    children: React.ReactNode
+}
+
+export const ThemeContext = createContext(theme)
+
+export const ThemeContextProvider = ({
+    children,
+}: ThemeContextProviderProps) => {
+    return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
+}
+
+Then wrap the box.tsx within the ThemeContextProvider component.
+
+Finally, on box.tsx, import useContext and the ThemeContext. Then create a variable to useContext. With the variable you can access the themes and assign them with the DIV style attribute as below:
+
+import { useContext } from "react"
+import { ThemeContext } from "./ThemeContext"
+
+export const Box = () => {
+    const theme = useContext(ThemeContext)
+    return <div style={{backgroundColor:theme.primary.main, color:theme.primary.text}}>Theme context</div>
+}
+
+It is usually easy when you know the context since typescript through inferencing can then figure out the type of object or information to be passed down. However the context might not be known initially hence need for a way to deal with future values:
+
+Refer to the User.tsx and UserContext.tsx in the Components/Context folder.
+
+With future values, by default, the user is set to null and hence the default context value is also null. Upon log in, the will change to a different type. There is therefore need to handle and define both current and future values in typescript.
+We therefore define the AuthUser type and the UserContextTypes which contain user properties and the usestate destructured values respectively.
+Since both of them will be null initially and have value later, then use the union type feature to specify this as:
+
+    const [user, setUser] = useState<AuthUser|null>(null)
+    export const UserContext  = createContext<UserContextType | null>(null)
+
+We then create the provider with value set to the distructure values of use state and wrap within it the children prop which is of type React.React Node. The code looks as below:
+
+
+import { createContext, useState } from "react"
+
+export type AuthUser = {
+    name: string,
+    email: string
+}
+
+type UserContextProviderProps = {
+    children: React.ReactNode
+}
+
+type UserContextType = {
+    user: AuthUser | null
+    setUser: React.Dispatch<React.SetStateAction<AuthUser | null>>
+}
+
+export const UserContext  = createContext<UserContextType | null>(null)
+
+export const UserContextProvider = ({children}: UserContextProviderProps) => {
+    const [user, setUser] = useState<AuthUser|null>(null)
+
+     return <UserContext.Provider value={{user, setUser}}>{children}</UserContext.Provider>
+}
+
+Finally, ContextUser.tsx file with the exported context. The final code is as below:
+
+import { useContext } from "react"
+import { UserContext } from "./UserContext"
+
+export const ContextUser = () => {
+    const userContext = useContext(UserContext);
+
+    const handleLogin = () => {
+        if(userContext) {
+            userContext.setUser({
+                name: 'Daniel',
+                email: 'danonsombi@gmail.com'
+            })
+        }
+    }
+    const handleLogout = () => {
+        if (userContext) {
+            userContext.setUser(null)
+        }
+    }
+
+    return ( 
+        <div>
+            <button onClick={handleLogin}>Login</button>
+            <button onClick={handleLogout}>Logout</button>
+            <div>User name is {userContext?.user?.name}</div>
+            <div>User email is {userContext?.user?.email}</div>
+        </div>
+    )
+}
+
+We can use type assertion so context is not optional as is at the moment. We achieve this by using the as keyword while defineing the context and types. Since the contrext is always created outside the component whereas its future value is set within a component, type assertion should be used to avoid the checks of whether null or not. The context will therefore be created as:
+
+export const UserContext  = createContext({} as UserContextType)
+
+and the final code modified as:
+
+import { useContext } from "react"
+import { UserContext } from "./UserContext"
+
+export const ContextUser = () => {
+    const userContext = useContext(UserContext);
+
+    const handleLogin = () => {
+        userContext.setUser({
+            name: 'Daniel',
+            email: 'danonsombi@gmail.com'
+        })
+    }
+    const handleLogout = () => {
+        userContext.setUser(null)
+    }
+
+    return ( 
+        <div>
+            <button onClick={handleLogin}>Login</button>
+            <button onClick={handleLogout}>Logout</button>
+            <div>User name is {userContext.user?.name}</div>
+            <div>User email is {userContext.user?.email}</div>
+        </div>
+    )
+}
+
+useRef Hook:
+
+
+
+
+
+
+
