@@ -807,6 +807,127 @@ export const ContextUser = () => {
 }
 
 useRef Hook:
+Primarily used for:
+1. Readonly ref for a DOM element
+2. Immutable value that can behave as an instance variable
+
+Ref can be used when one wants to set the focus to some specific instance. It can be used together with the useEffect with the empty array as the second parameter so to as a componentDidMount function. with .js, the useRef can be used as below:
+
+import { useRef, useEffect } from "react";
+
+export const DomRef = () => {
+    const inputRef = useRef(null)
+
+    useEffect(() => {
+        inputRef.current.focus()
+    },[])
+
+    return(
+        <div>
+            <input type="text" ref={inputRef}/>
+        </div>
+    )
+}
+
+however, it throws an error in typescript since the default value is null. This should be handled. To sort this we can use optional chaining as input.current?.focus().
+This throws another error that on the focus method, because of the reference type. The type of the DOM element should therefore be specified as:
+    const inputRef = useRef<HTMLInputElement>(null). 
+
+If not null, you can use the ! to avoid optional chaining i.e., 
+    inputRef = useRef<HTMLInputElement>(null!)
+
+and call it as:
+    input.current.focus()
+
+The final code:
+
+import { useRef, useEffect } from "react";
+
+export const DomRef = () => {
+    const inputRef = useRef<HTMLInputElement>(null!)
+
+    useEffect(() => {
+        inputRef.current.focus()
+    },[])
+
+    return(
+        <div>
+            <input type="text" ref={inputRef}/>
+        </div>
+    )
+}
+
+For mutable Refs:
+Create a variable assigned to useRef and initialize it to null.
+When the component mounts, on the useEffect, invoke the setInterval function to increase the timer value by one every second then store it in the intervalRef.current. When the component iunmounts call the stopTimer which clears the interval using the intervalRef.current.
+
+import {useState, useRef, useEffect} from 'react'
+
+export const MutableRef = () => {
+    const [timer, setTimer] = useState(0)
+    const interValRef = useRef(null)
+
+    const stopTimer = () => {
+        window.clearInterval(interValRef.current)
+    }
+
+    useEffect(() => {
+        interValRef.current = window.setInterval(() => {
+            setTimer((timer) => timer + 1)
+        }, 1000)
+
+        return () => {
+            stopTimer()
+        }
+    }, [])
+
+    return (
+        <div>
+            HookTimer - {timer} - 
+            <button onClick={() => stopTimer()}>Stop Timer</button>
+        </div>
+    )
+}
+
+By default it has errors. By hovering on the errors you'll get the specific of what needs to be fixed. Since useRef is set to null, interValRef being a number must also be defined. For the stopTimer, typescript sees it as either number or undefined, one can either check if the value interValRef.current has a value before calling the clear interval or use the union type feature to resolve the error as: 
+    const interValRef = useRef<number | undefined>(undefined)
+
+The final code:
+    import {useState, useRef, useEffect} from 'react'
+
+    export const MutableRef = () => {
+        const [timer, setTimer] = useState(0)
+        const interValRef = useRef<number | null>(null)
+
+        const stopTimer = () => {
+            if (interValRef.current)
+                window.clearInterval(interValRef.current)
+        }
+
+        useEffect(() => {
+            interValRef.current = window.setInterval(() => {
+                setTimer((timer) => timer + 1)
+            }, 1000)
+
+            return () => {
+                stopTimer()
+            }
+        }, [])
+
+        return (
+            <div>
+                HookTimer - {timer} - 
+                <button onClick={() => stopTimer()}>Stop Timer</button>
+            </div>
+        )
+    }
+
+
+Therefore for DOM references, you specify the DOM element Type as:
+    const inputRef = useRef<HTLMInputElement>
+
+whereas for the mutable References specify the appropriate type e.g.,
+    const interValRef = useRef<number | null>(null)
 
 
 
