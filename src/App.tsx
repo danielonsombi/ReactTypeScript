@@ -17,6 +17,8 @@ import { Box } from './Components/Context/Box';
 import { UserContextProvider } from './Components/Context/UserContext';
 import {ContextUser} from './Components/Context/ContextUserUser';
 import ClassCounter from './Components/Class/ClassCounter';
+import { Private } from './Components/Auth/Private';
+import { Profile } from './Components/Auth/Profile';
 
 function App() {
   const personName = {
@@ -40,7 +42,8 @@ function App() {
   ]
   return (
     <div className="App">
-      <ClassCounter message='The count value is'/>
+      <Private isLoggedIn={true} component={Profile}/>
+      {/* <ClassCounter message='The count value is'/> */}
       {/* <UserContextProvider>
         <ContextUser />
       </UserContextProvider> */}

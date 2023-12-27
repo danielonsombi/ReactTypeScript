@@ -990,6 +990,44 @@ export default Counter
 
 If you do not have props but have state define it as: Component<{}, CounterState> else if have props but no state then Component<CounterProps>
 
+Component Prop:
+If a component does not have any props or states, it does not need any types.
+On the Private.tsx, it accepts two props, isLoggedIn, and component. We therefore must define the types resulting to below code:
+
+import { Login } from "./Login"
+
+type PrivateProps = {
+    isLoggedIn: boolean
+    Component: React.ComponentType
+}
+
+export const Private = ({isLoggedIn, Component} : PrivateProps) => {
+    if (isLoggedIn) {
+        return <Component/>
+    } else {
+        return <Login/>
+    }
+}
+
+However, if the passed in component say profile has props, the component to which it is passed will throw an error since it does not know the component can accept the name props. This can be resolved by exporting the ProfileProps type from the profile component, import it into the Private component then specify the props in the Component value as below:
+
+import { Login } from "./Login"
+import { ProfileProps } from "./Profile"
+
+type PrivateProps = {
+    isLoggedIn: boolean
+    component: React.ComponentType<ProfileProps>
+}
+
+export const Private = ({isLoggedIn, component: Component} : PrivateProps) => {
+    if (isLoggedIn) {
+        return <Component name='Daniel'/>
+    } else {
+        return <Login/>
+    }
+}
+
+
 
 
 
