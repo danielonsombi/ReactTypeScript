@@ -930,6 +930,66 @@ whereas for the mutable References specify the appropriate type e.g.,
     const interValRef = useRef<number | null>(null)
 
 
+Typing Class Components:
+Some projects might have been in development for a few years and could come across class components.
+Consider:
+
+import React, { Component } from 'react'
+
+export class Counter extends Component {
+    state = {
+        count: 0,
+    }
+
+    handleClick = () => {
+        this.setState((prevState) => ({count : prevState.count + 1}))
+    }
+    render() {
+        return (
+        <div>
+            <button onClick={this.handleClick}>Increment</button>
+            {this.props.message} {this.state.count}
+        </div>
+        )
+    }
+}
+
+export default Counter
+
+In typescript, this has errors that should be resolved which can easily be resolved by define the prop and state types then connect them with the class component after the component key word as below:
+
+import React, { Component } from 'react'
+
+type CounterProps = {
+    message: string
+}
+
+type CounterState = {
+    count: number
+}
+
+export class Counter extends Component<CounterProps, CounterState> {
+    state = {
+        count: 0,
+    }
+
+    handleClick = () => {
+        this.setState((prevState) => ({count : prevState.count + 1}))
+    }
+    render() {
+        return (
+        <div>
+            <button onClick={this.handleClick}>Increment</button>
+            {this.props.message} {this.state.count}
+        </div>
+        )
+    }
+}
+
+export default Counter
+
+If you do not have props but have state define it as: Component<{}, CounterState> else if have props but no state then Component<CounterProps>
+
 
 
 

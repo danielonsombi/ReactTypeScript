@@ -16,6 +16,7 @@ import { ThemeContextProvider } from './Components/Context/ThemeContext';
 import { Box } from './Components/Context/Box';
 import { UserContextProvider } from './Components/Context/UserContext';
 import {ContextUser} from './Components/Context/ContextUserUser';
+import ClassCounter from './Components/Class/ClassCounter';
 
 function App() {
   const personName = {
@@ -39,9 +40,10 @@ function App() {
   ]
   return (
     <div className="App">
-      <UserContextProvider>
+      <ClassCounter message='The count value is'/>
+      {/* <UserContextProvider>
         <ContextUser />
-      </UserContextProvider>
+      </UserContextProvider> */}
       {/* <ThemeContextProvider>
         <Box />
       </ThemeContextProvider> */}
