@@ -62,7 +62,7 @@ Some of the misconceptions are:
 However, it is an initial investment that pays in the long run. Once you get the hang of it, the benefit you get outweighs the time you spend on it.
 
 
-Note that, with the ctypescript template, the App.js and index.js files no longer exist in the src folder. Instead, we have app.tsx and index.tsx files. The index.tsx is the entry point to our app that mounts the app.tsx to the room DOM. App.tsx contains the app component which is the root component.
+Note that, with the typescript template, the App.js and index.js files no longer exist in the src folder. Instead, we have app.tsx and index.tsx files. The index.tsx is the entry point to our app that mounts the app.tsx to the room DOM. App.tsx contains the app component which is the root component.
 When working with the tsx, this should be maintained throughout the implementation. If one falls back to using the .js extension, the app breaks.
 
 If you hover on the App() component, it tells you it is a function that returns a JSX element. This is refered to as type inferrence.
@@ -577,7 +577,7 @@ function reducer(state: CounterState, action: CounterAction)
     }
 }
 
-Having the type set to state, means we can pass in any string. But we can change this to use the template literals to ensure correct strings are passed in. Since we know the type can be either increment or decrement we can set it as so.
+Having the type set to state, means we can pass in any string. But we can change this to use the string literals to ensure correct strings are passed in. Since we know the type can be either increment or decrement we can set it as so.
 
 In some of the types say reset, no payload should be passed in since it is to return the initial state. Explicitly, typescript should be informed of this. If you change the value of payload to 
 
@@ -1027,6 +1027,181 @@ export const Private = ({isLoggedIn, component: Component} : PrivateProps) => {
     }
 }
 
+
+Generic Props:
+Consider the a List.tsx component that passes the clicked item to an Onclick handler:
+
+import React from 'react'
+
+type ListProps = {
+    items: string[]
+    onClick: (value:string) => void
+}
+
+export const List = ({items, onClick}: ListProps) => {
+    return (
+        <div>
+            <h2>List of Items</h2>
+            {items.map((item, index) => {
+                return(
+                    <div key={index} onClick={() => onClick(item)}>
+                        {item}
+                    </div>
+                )
+            })}
+        </div>
+    )
+}
+
+The above can be called in App.tsx as:
+
+<List
+    items={['Batman', 'Superman', 'Wonder Woman']}
+    onClick={(item => console.log(item))}
+/>
+
+
+With this, if there be a need to render a list of numbers and handle the click on each one of them, the array of numbers if passed to the component might not work as expected since the array is explicitly declared to accept an array of strings with an error, type number is not assignable to type string.
+
+This can be resolved by:
+1. Setting items to allow both string[] and number[]:
+        type ListProps = {
+            items: string[] | number[]
+            onClick: (value:string | number) => void
+        }
+    and make the second call as:
+
+        <List
+            items={[1,2,3]}
+            onClick={(item => console.log(item))}
+        />
+
+    but this is still strict to having strings and numbers only. We therefore need a way to tell typescript that the type of item and the handler can vary.
+
+2. Use Generics:
+   There are a few steps to be followed in order to achieve this.
+   a. Add a generic type to the list props type. This is achieved using angle brackets on the ListProps type as: 
+
+   type ListProps<T> = {
+    items: T[]
+    onClick: (Value: T) => void
+   }
+
+   This change must also be effected on the rest of the compoent. but in the component, we must specify what T is while extending its base type as:
+
+   export const List = <T extends {}> ({items, onClick}: ListProps<T>) => {}
+
+   <T extends {}> is the list restriction when passing in props.
+
+   With this, you can pass any datatype and the generic code will work just fine. The final code looks as below:
+
+        import React, { ReactNode } from 'react'
+
+        type ListProps<T> = {
+            items: T[]
+            onClick: (value: T) => void
+        }
+
+        export const List = <T extends {}>({items, onClick}: ListProps<T>) => {
+            return (
+                <div>
+                    <h2>List of Items</h2>
+                    {items.map((item, index) => {
+                        return(
+                            <div key={index} onClick={() => onClick(item)}>
+                                {/* {item as ReactNode} */}
+                                {JSON.stringify(item)}
+                            </div>
+                        )
+                    })}
+                </div>
+            )
+        }
+
+If you want to restrict the generic types, you can focus on the constraint  <T extends {}>. So if just string and numbers then <T extends string | number> If the generic type should contain an id of type number then: <T extends { id:number }>. This ensures we can safely pass the item.id. With this, if the object passed has no id, App.tsx will try an error with the details.
+
+Generics help avoid duplication when you need multiple types to be handled while providing strict type checking.
+
+Restricting Props:
+One can restrict the props that can be passed to a component. In some instances, you may want to check if one value/prop is submitted, then the other should not and vice versa. Consider a component with the following type:
+
+type RandomNumberProps = {
+    value: number
+    isPositive?: boolean
+    isNegative?: boolean
+    isZero?: boolean
+}
+
+Where if set to positive, then the negative and zero values should not be passed. There is need to implement such restrictions.
+
+In RandomNumber.tsx, we create different  types for positive, negative and zero. We will create a single type for the default value that cuts across all, then when creating the positive one, use the & operator to have it pick all default types then add the positive type properties and set the other value of other properties to never. The final type is as below:
+
+        type RandomNumberType = {
+            value: number
+        }
+
+        type PositiveNumber = RandomNumberType & {
+            isPositive: boolean
+            isNegative?: never
+            isZero?: never
+        }
+
+        type NegativeNumber = RandomNumberType & {
+            isNegative: boolean
+            isPositive?: never
+            isZero?: never
+        }
+
+        type Zero = RandomNumberType & {
+            isZero: boolean
+            isNegative?: never
+            isPositive?: never
+        }
+
+        type RandomNumberProps = PositiveNumber | NegativeNumber | Zero
+
+With this implementation, one cannot pass the isNegative and isPositive props when calling the RandomNumber component. Returns the error types of property isNegative are incompatible.
+
+
+Template Literals and Exclude:
+Templates Literal types are built on string literal types.
+With the idea of string literal types:
+
+type StatusProps = {
+    status: 'loading' | 'success' | 'error'
+}
+
+we can create template literals by using unions
+
+If you look at a library like React-hot-toast, a toast notification can pop up in various positions of the screen. We then need to learn how to code the position using the template literal approach. It is useful when you compine values to create a whole new value. It is a skill worth having in your tool kit.
+
+The template literals can be created as below:
+
+        type HorizontalPosition = 'left' | 'center' | 'right'
+        type VerticalPosition = 'top' | 'center' | 'bottom'
+
+        //To achieve the value commented above, we must find a way to combine the two. Hence the use of template literals:
+        //The type below will find all posible combinations for the position property. The valid combinations can be accessed from any other parent component that would like to pass them down to the children components.
+        type ToastProps = {
+            position: `${HorizontalPosition}-${VerticalPosition}`
+        }
+
+
+If one tries to pass a value that is not part of possible combinations, react throws an error. As per the above, below are all posible combinations:
+
+/**
+ * position prop can be one of
+ * "left-center" | "left-top" | "left-bottom" | "center" | "center-top"
+ * "center-bottom" | "right-center" | "right-top" | "right-bottom"
+ */
+
+ Position can also be center-center. Which is preferrably referred to as just center.
+ To exclude it, then we use the Exclude keyword. Within the angle brackets the template literal will be the first argument and the value to be excluded the second argument.
+
+ Since we still need the center value, using unions (|) add the center value as the second position value as:
+        type ToastProps = {
+            position: Exclude<`${HorizontalPosition}-${VerticalPosition}`, 'center-center'> | 'center'
+        }
 
 
 

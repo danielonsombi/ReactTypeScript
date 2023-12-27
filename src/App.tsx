@@ -19,6 +19,9 @@ import {ContextUser} from './Components/Context/ContextUserUser';
 import ClassCounter from './Components/Class/ClassCounter';
 import { Private } from './Components/Auth/Private';
 import { Profile } from './Components/Auth/Profile';
+import { List } from './Components/Generics/List';
+import { RandomNumber } from './Components/Restriction/RandomNumber';
+import { Toast } from './Components/Templateliterals/Toast';
 
 function App() {
   const personName = {
@@ -42,7 +45,39 @@ function App() {
   ]
   return (
     <div className="App">
-      <Private isLoggedIn={true} component={Profile}/>
+      <Toast position='center'/>
+      {/* <RandomNumber value={10} isPositive/> */}
+      {/* <List
+        items={['Batman', 'Superman', 'Wonder Woman']}
+        onClick={(item => console.log(item))}
+      />
+      
+      <List
+          items={[1,2,3]}
+          onClick={(item => console.log(item))}
+      />
+
+      <List 
+        items = {[
+          {
+            first: 'Bruce',
+            last: 'Wayne',
+          },
+          {
+            first: 'Clark',
+            last: 'Kent',
+          },
+          {
+            first: 'Princess',
+            last: 'Diana'
+          }                   
+        ]}
+        
+        onClick={(item => console.log(item))}
+      /> */}
+
+      {/* <Private isLoggedIn={true} component={Profile}/> */}
+
       {/* <ClassCounter message='The count value is'/> */}
       {/* <UserContextProvider>
         <ContextUser />
