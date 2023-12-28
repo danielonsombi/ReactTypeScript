@@ -1203,6 +1203,213 @@ If one tries to pass a value that is not part of possible combinations, react th
             position: Exclude<`${HorizontalPosition}-${VerticalPosition}`, 'center-center'> | 'center'
         }
 
+Wrapping HTML Elements:
+If building an application without relying on a component library, it is common to create basic elements like button and inputs with your on styling, such should accept special props that you want to use along with the normal html element props.
+
+If a button was to be defined as below:
+
+    type ButtonProps = {
+        variant: 'primary' | 'secondary'
+    }
+
+    export const CustomButton = ({ variant }: ButtonProps) => {
+        return <button className={`class-with-${variant}`}>Label</button>
+    }
+
+then invoked from app.tsx, it would not work. Even a simple onClick handler would not work as expected.
+We therefore need to create other props apart from the variant prop as:
+
+    type ButtonProps = {
+        variant: 'primary' | 'secondary'
+    } & React.ComponentProps<'button'>
+
+
+With this, you can then destructure the component as:
+    export const CustomButton = ({ variant, children, ...rest }: ButtonProps) => {
+        return <button className={`class-with-${variant}` {...rest}}>{children}</button>
+    }
+
+For input.tsx, the wrapping is done as below:
+    
+    type InputProps = React.ComponentProps<'input'>
+
+    export const CustomInput = (props: InputProps) => {
+        return <input ...props/>
+    }
+
+when wrapping, the other feature that comes in handy is the omit keyword that takes the object type and removes the specified properties. On the code below:
+
+    export const CustomButton = ({ variant, children, ...rest }: ButtonProps) => {
+        return <button className={`class-with-${variant}` {...rest}}>{children}</button>
+    }
+
+the children prop references the React.ReactNode that comes from the HTML button element props. This allows pass in any ReactNode type as children to the custom button element. This means, it can be passed in as either:
+    <div className="App">
+      <CustomButton variant='primary' onClick={() => console.log('Clicked')}> 
+        Primary Button
+      </CustomButton>
+    </div>
+
+or:
+
+    <div className="App">
+      <CustomButton variant='primary' onClick={() => console.log('Clicked')}> 
+        <div>Primary Button</div>
+      </CustomButton>
+    </div>
+
+However, we might want to restrict the children type to just strings. If the type is changed as below:
+
+    type ButtonProps = {
+        variant: 'primary' | 'secondary'
+        children: string
+    } & React.ComponentProps<'button'>
+
+the code will still not work since children becomes an intersection of string & React.ReactNode. We therefore need to tell typescript to leave out the children type from the html button element type. To do this we use the Omit keyword. The correct type is to be created as:
+
+    type ButtonProps = {
+        variant: 'primary' | 'secondary'
+        children: string
+    } & Omit<React.ComponentProps<'button'>,'children'>
+
+with Omit in place, the code as below will throw an error in app.tsx.
+    <CustomButton variant='primary' onClick={() => console.log('Clicked')}> 
+        <div>Primary Button</div>
+      </CustomButton>
+
+Extracting components prop types:
+This is how to extract the type from the React.ComponentProps.
+You might want to reuse a components prop types but you do not have access to the type itself becuase it is from a library you do not have access to. In such a case, you can extract prop types of an existing component.
+
+Assume this component need the exact same props of the greet component that accepts three props: name, messageCount, isLoggedIn.
+Assume we can not export the prop types from the greet component. We can use the React.ComponentProps to extract the props of the greet component:
+
+    import React from 'react'
+    import { Greet } from '../Greet'
+
+    const CustomComponent = (props: React.ComponentProps<typeof Greet>) => {
+    return (
+        <div>
+        {props.name}
+        </div>
+    )
+    }
+
+    export default CustomComponent
+
+
+Polymorphic Components:
+This won't be needed much unless building a component library or a design system for a project.
+Define a Text.tsx component as below:
+
+    import React from 'react'
+
+    type TextProps = {
+        size?: 'sm' | 'md' | 'lg'
+        color?: 'primary' | 'secondary'
+        children: React.ReactNode
+    }
+
+    const Text = ({size, color, children}: TextProps) => {
+    return (
+        <div className={`class-with-${size}-${color}`}>
+        {children}
+        </div>
+    )
+    }
+
+    export default Text
+
+The above can be called from app.tsx as:
+    <Text size='lg'>Heading</Text>
+    <Text size='md'>Paragraph</Text>
+    <Text size='sm' color='secondary'>Label</Text>
+
+However, there is one problem:
+    Though we have one reusable component to render either heading, paragraph or label, the underlying html element is the same a div tag which is not good for semantics. We then need a way to pass in the HTM Element for each. Such a component is called a polymorphic component.
+
+    To achieve this, we need an as prop which controls which element is rendered on the browser. By creating an option as type the app.tsx error on as prop is fixed.
+
+    Once defined, you can then destructure it in the component then initialize it as:
+        Const Component = as || 'div'
+    
+    The initialization can either be as string or have div as the default string then instead of using <div>, use <Component>
+
+    But typescript will complain about the Component. as cannot therefore be of type string but instead use the React.ElementType. On App.tsx, the intellicense can now show the possible as values.
+
+    But the component is not able to render the html element props. e.g labels should allow creation of htmlFor attribute and its value. But with the new syntax, it throws an error that should be fixed.
+
+    To resolve this, we should combine both the custom props and the html element props.
+
+    type TextOwnProps = {
+        size?: 'sm' | 'md' | 'lg'
+        color?: 'primary' | 'secondary'
+        children: React.ReactNode
+        as?: React.ElementType
+    }
+
+    type TextProps = TextOwnProps & React.ComponentProps
+
+    but React.ComponentProps is a generic type and need to figure out which html element whose props should be combined with the TextOwnProps. Since the as can be anything, what we need is a generic type the code then is as below:
+
+        import React from 'react'
+
+        type TextOwnProps<E extends React.ElementType> = {
+            size?: 'sm' | 'md' | 'lg'
+            color?: 'primary' | 'secondary'
+            children: React.ReactNode
+            as?: E
+        }
+
+        type TextProps<E extends React.ElementType> = TextOwnProps<E> & React.ComponentProps<E>
+
+        const Text = ({size, color, children, as}: TextProps) => {
+            const Component = as || 'div'
+            return (
+                <Component className={`class-with-${size}-${color}`}>
+                {children}
+                </Component>
+            )
+        }
+
+        export default Text
+
+    This results to name collitions and duplicate types. E.g., children might collide with children from the div tag. So we need to omit the keys specified as part of text owned props, as: 
+
+        type TextProps<E extends React.ElementType> = TextOwnProps<E> & Omit<React.ComponentProps<E>, keyof TextOwnProps<E>>
+    We now have all types of the elements except the one we have specified ourselves.
+
+On the text component itself we need to add the generic type. The final code is as below:
+
+
+import React from 'react'
+
+type TextOwnProps<E extends React.ElementType> = {
+    size?: 'sm' | 'md' | 'lg'
+    color?: 'primary' | 'secondary'
+    children: React.ReactNode
+    as?: E
+}
+
+type TextProps<E extends React.ElementType> = TextOwnProps<E> & Omit<React.ComponentProps<E>, keyof TextOwnProps<E>>
+
+const Text = <E extends React.ElementType = 'div'>({
+    size, 
+    color, 
+    children, 
+    as
+}: TextProps<E>) => {
+    const Component = as || 'div'
+    return (
+        <Component className={`class-with-${size}-${color}`}>
+        {children}
+        </Component>
+    )
+}
+
+export default Text
+
+
 
 
 

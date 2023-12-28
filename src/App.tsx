@@ -22,6 +22,9 @@ import { Profile } from './Components/Auth/Profile';
 import { List } from './Components/Generics/List';
 import { RandomNumber } from './Components/Restriction/RandomNumber';
 import { Toast } from './Components/Templateliterals/Toast';
+import { CustomButton } from './Components/Html/Button';
+import CustomComponent from './Components/Html/CustomComponent';
+import Text from './Components/Polymorphic/Text';
 
 function App() {
   const personName = {
@@ -45,7 +48,16 @@ function App() {
   ]
   return (
     <div className="App">
-      <Toast position='center'/>
+      <Text as='h1' size='lg'>Heading</Text>
+      <Text as='p' size='md'>Paragraph</Text>
+      <Text as='label' htmlFor = 'someId' size='sm' color='secondary'>Label</Text>
+
+      {/* <CustomComponent name='Daniel' isLoggedIn/> */}
+      {/* <CustomButton variant='primary' onClick={() => console.log('Clicked')}> 
+        Primary Button
+      </CustomButton> */}
+
+      {/* <Toast position='center'/> */}
       {/* <RandomNumber value={10} isPositive/> */}
       {/* <List
         items={['Batman', 'Superman', 'Wonder Woman']}
